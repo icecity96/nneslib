@@ -87,3 +87,4 @@ def diffusion_importance(graph: nx.Graph) -> EdgeSignificance:
 
     .. [1] Liu Y, Tang M, Zhou T, et al. Improving the accuracy of the k-shell method by removing redundant links: From a perspective of spreading dynamics[J]. Scientific reports, 2015, 5: 13172.
     """
+    raise NotImplemented()

@@ -4,9 +4,11 @@ import numpy as np
 
 
 class EdgeSignificance(Significance):
-    def __init__(self, significances: dict, graph: nx.Graph, method_name: str, method_parameters: dict = None):
+    def __init__(self, significances: dict, graph: nx.Graph, method_name: str,
+                 method_parameters: dict = None, attrs: dict = None):
         super().__init__(significances, graph, method_name, method_parameters)
         self.significance_matrix, self.vertices_dict = self._get_numpy_significance_matrix()
+        self.attrs = attrs
 
     def _get_numpy_significance_matrix(self):
         """

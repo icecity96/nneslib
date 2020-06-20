@@ -1,5 +1,7 @@
 import networkx as nx
+import numpy as np
 from nneslib.classes.edge_significance import EdgeSignificance
+
 
 __all__ = ['betweenness_centrality', 'degree_product']
 
@@ -67,13 +69,13 @@ def degree_product(graph: nx.Graph, weight: str = None, theta: float = 1.0) -> E
     """
     significance = {
         [u, v]: (graph.degree(u, weight=weight) * graph.degree(v, weight=weight)) ** theta
-        for u, v in graph.nodes()}
+        for u, v in graph.edges()}
     return EdgeSignificance(significance, graph, "degree_product", {"weight": weight, "theta": theta})
 
 
 def diffusion_importance(graph: nx.Graph) -> EdgeSignificance:
     """
-    The diffusion importance an edge takes disease spread process into consideration.
+    The diffusion importance of an edge takes disease spread process into consideration.
 
     .. math:: D_{e} = \\frac{n_{x \\leftarrow y} + n_{y \leftarrow x}}{2}
 
@@ -83,8 +85,61 @@ def diffusion_importance(graph: nx.Graph) -> EdgeSignificance:
     :param graph: the networkx graph object to be used. Treat it as unweighted
     :return: an EdgeSignificance object
 
+    .. rubric:: Example
+
+    >>> from nneslib.edge import edge_significance
+    >>> import networkx as nx
+    >>> G = nx.karate_club_graph()
+    >>> es = edge_significance.diffusion_importance(G)
+
     .. rubric:: Reference
 
     .. [1] Liu Y, Tang M, Zhou T, et al. Improving the accuracy of the k-shell method by removing redundant links: From a perspective of spreading dynamics[J]. Scientific reports, 2015, 5: 13172.
     """
-    raise NotImplemented()
+    significance = {}
+    for u, v in graph.edges():
+        u_neighbors, v_neighbors = graph.neighbors(u), graph.neighbors(v)
+        n_uv = len([node for node in u_neighbors if graph.has_edge(v, node) and node != v])
+        n_vu = len([node for node in v_neighbors if graph.has_edge(u, node) and node != u])
+        significance[[u, v]] = (n_uv + n_vu)/2
+    return EdgeSignificance(significance, graph, "diffusion_importance", None)
+
+
+def brightness(graph: nx.Graph) -> EdgeSignificance:
+    """
+    The brightness of an edge can reflect the significance in maintaining global connectivity, which only depends on local information
+    of network topology.
+
+    .. math:: B_E = \\sqrt{S_xS_y}/S_E
+
+    where x and y are the two endpoints of the edge E. S is the clique size.
+
+    :param graph: the networkx graph object to be used
+    :return: an EdgeSignificance object
+
+    .. rubric:: Example
+
+    >>> from nneslib.edge import edge_significance
+    >>> import networkx as nx
+    >>> G = nx.karate_club_graph()
+    >>> es = edge_significance.brightness(G)
+
+    .. rubric:: Reference
+
+    .. [1]Cheng X Q, Ren F X, Shen H W, et al. Bridgeness: a local index on edge significance in maintaining global connectivity[J]. Journal of Statistical Mechanics: Theory and Experiment, 2010, 2010(10): P10011.
+    """
+    cliques = sorted(nx.find_cliques(graph), key=len, reverse=True)
+    significance = {}
+    for u, v in graph.edges():
+        s_u, s_v, s_e = 0, 0, 0
+        for clique in cliques:
+            if s_u * s_v * s_e != 0:    # already find
+                break
+            if u in clique and s_u == 0:
+                s_u = len(clique)
+            if v in clique and s_v == 0:
+                s_v = len(clique)
+            if u in clique and s_e == 0 and v in clique:
+                s_e = len(clique)
+        significance[[u,v]] = np.sqrt(s_u * s_v) / s_e
+    return EdgeSignificance(significance, graph, "brightness", None)

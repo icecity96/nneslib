@@ -1,9 +1,13 @@
 import networkx as nx
 import numpy as np
 from nneslib.classes.edge_significance import EdgeSignificance
+from .internal import edge_random_walk_k_path
 
 
-__all__ = ['betweenness_centrality', 'degree_product']
+__all__ = [
+    'betweenness_centrality', 'degree_product', 'diffusion_importance', 'brightness',
+    'ERW_Kpath'
+]
 
 
 def betweenness_centrality(graph: nx.Graph, k: int = None, normalize: bool = True,
@@ -143,3 +147,26 @@ def brightness(graph: nx.Graph) -> EdgeSignificance:
                 s_e = len(clique)
         significance[[u,v]] = np.sqrt(s_u * s_v) / s_e
     return EdgeSignificance(significance, graph, "brightness", None)
+
+
+def ERW_Kpath(graph: nx.Graph, k: int, ruo: int, beta:float) -> EdgeSignificance:
+    """
+    Edge random walk K path. This method use random walk to estimate the edge k-path centrality.
+
+    .. math:: L^k(e) = \\sum_{s \\in V}\\frac{\\delta_s^k(e)}{\\delta_s^k}
+
+    where s is all possible source node. :math:`\\delta_s^k` is the number of k-path origin from s. :math:`\\delta_s^k(e)`
+    is the number of k-path origin from s and traving from e.
+
+    :param graph: the networkx graph object to be used
+    :param k: the max path length
+    :param ruo: how many times to iter
+    :param beta: update step.
+    :return: an EdgeSignificance object
+
+    .. rubric:: Reference
+    .. [1] Meo, Pasquale De, Emilio Ferrara, Giacomo Fiumara, and Angela Ricciardello 2013A Novel Measure of Edge Centrality in Social Networks. ArXiv.
+    """
+    significance = edge_random_walk_k_path(graph, k, ruo, beta)
+    return EdgeSignificance(significance, graph, "ERW_Kpath", {"k": k, "ruo": ruo, "beta": beta})
+

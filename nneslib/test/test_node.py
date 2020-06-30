@@ -1,6 +1,6 @@
 import unittest
 import networkx as nx
-from nneslib.node.node_significance import centrality_metric_spectrum
+from nneslib.node.node_significance import centrality_metric_spectrum, EffC
 
 
 class NodeImportanceTestCase(unittest.TestCase):
@@ -22,6 +22,20 @@ class NodeImportanceTestCase(unittest.TestCase):
         self.assertEqual(set(expected), set(actual))
         for key in actual:
             self.assertAlmostEqual(expected[key], actual[key], delta=1e-2)
+
+    def test_EffC(self):
+        graph = nx.Graph()
+        graph.add_nodes_from([i for i in range(1, 10)])
+        edges = [(i, 3) for i in range(1, 8) if i != 3] + [(5, 7), (3, 9), (7, 8), (8, 9), (2, 9), (4, 5), (5, 6)]
+        graph.add_edges_from(edges)
+        node_significance = EffC(graph, None)
+        expected = {
+            1: 0.1806, 2: 0.2083, 3: 0.5215, 4: 0.2014, 5: 0.2500, 6: 0.2014, 7: 0.2361, 8: 0.1875, 9: 0.2361
+        }
+        actual = node_significance.significance
+        self.assertEqual(set(expected), set(actual))
+        for key in actual:
+            self.assertAlmostEqual(expected[key], actual[key], delta=1e-4)
 
 if __name__ == '__main__':
     unittest.main()

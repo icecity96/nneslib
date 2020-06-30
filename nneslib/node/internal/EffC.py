@@ -27,19 +27,23 @@ def _efficiency(shortest_path: dict, source, target, removed_node=None, graph: n
         if removed_node not in distance:  # if removed_node not in the shortest-path, the efficiency will not change
             return 1 / (len(distance) - 1)
         subgraph = graph.subgraph([node for node in graph.nodes() if node != removed_node])
-        distance = nx.shortest_path(subgraph, source, target, weight=weight)
+        try:
+            distance = nx.shortest_path(subgraph, source, target, weight=weight)
+        except:
+            distance = []
         return 0 if len(distance) == 0 else 1 / (len(distance) - 1)
 
 
 def efficiency_centrality(graph: nx.Graph, weight: str = None) -> dict:
     shortest_path = nx.shortest_path(graph, weight=weight)
     nodes = list(graph.nodes())
-    E = sum([2 * _efficiency(shortest_path, source, target) for index, source in enumerate(nodes[:-1])
+    E = sum([_efficiency(shortest_path, source, target) for index, source in enumerate(nodes[:-1])
              for target in nodes[index + 1:]]) / (len(nodes) * len(nodes) - len(nodes))
     significance = {}
-    removed_N = len(nodes) - 1
+    # removed_N = len(nodes) - 1
+    removed_N = len(nodes)
     for node in nodes:
-        E_hat = sum([2 * _efficiency(shortest_path, source, target, node, graph, weight)
+        E_hat = sum([_efficiency(shortest_path, source, target, node, graph, weight)
                      for index, source in enumerate(nodes[:-1]) for target in nodes[index + 1:]])
         E_hat /= (removed_N * removed_N - removed_N)
         significance[node] = (E - E_hat) / E

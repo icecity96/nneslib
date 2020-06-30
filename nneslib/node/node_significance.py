@@ -3,9 +3,11 @@ import numpy as np
 
 import numpy.linalg as linalg
 from nneslib.classes.node_significance import NodeSignificance
+from .internal import efficiency_centrality
 
 __all__ = [
-    "centrality_metric_spectrum", "degree_centrality", "betweenness_centrality", "closeness_centrality"
+    "centrality_metric_spectrum", "degree_centrality", "betweenness_centrality", "closeness_centrality",
+    "EffC"
 ]
 
 
@@ -129,3 +131,20 @@ def closeness_centrality(graph: nx.Graph, distance: str = None, wf_improved: boo
     significance = nx.closeness_centrality(graph, distance=distance, wf_improved=wf_improved)
     return NodeSignificance(significance, graph, "closeness_centrality",
                             {"distance": distance, "wf_improved": wf_improved})
+
+
+def EffC(graph: nx.Graph, weight: str = None) -> NodeSignificance:
+    """
+    The efficiency centrality :math:`C^P{EffC}_k` of node k is defined as the relative drop in the network efficiency
+    caused by the removal of the node k from initial graph G:
+
+    :param graph: the graph object to be used
+    :param weight: If None, all edge weights are considered equal. Otherwise holds the name of the edge attribute used as weight.
+    :return: an NodeSignificance object
+
+    .. rubric:: Reference
+
+    .. [1] Wang, Shasha, Yuxian Du, and Yong Deng 2017A New Measure of Identifying Influential Nodes: Efficiency Centrality. Communications in Nonlinear Science and Numerical Simulation 47: 151–163.
+    """
+    significance = efficiency_centrality(graph, weight)
+    return NodeSignificance(significance, graph, "EffC", {"weight": weight})
